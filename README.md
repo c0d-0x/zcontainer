@@ -17,7 +17,7 @@ sudo ./bin/zcontainer ## and enjoy!!
 
 ```
 
-> [!Notice]
+> [!Note]
 > No Contributions Accepted <br>
 > This project is solely for learning and experimentation. Contributions are not needed at this time.
 
