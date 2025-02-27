@@ -10,6 +10,7 @@ char *create_stack(void) {
   }
   return (static_cast<char *>(stack) + PAGESIZE);
 }
+
 void cleanup_stack(char *stack) {
   if (stack != nullptr)
     munmap(stack, getpagesize());
