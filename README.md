@@ -14,11 +14,10 @@ mkdir bin
 make
 ## run
 sudo ./bin/zcontainer ## and enjoy!!
-
 ```
 
 > [!Note]
-> No Contributions Accepted <br>
+> No Contributions Accepted 😑 <br>
 > This project is solely for learning and experimentation. Contributions are not needed at this time.
 
 

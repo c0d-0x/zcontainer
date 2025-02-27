@@ -1,6 +1,6 @@
 #include "core.h"
-#include <iostream>
-void *create_stack(void) {
+
+char *create_stack(void) {
   const int PAGESIZE = getpagesize();
   void *stack =
       mmap(nullptr, PAGESIZE, PROT_READ | PROT_WRITE,
@@ -10,35 +10,58 @@ void *create_stack(void) {
   }
   return (static_cast<char *>(stack) + PAGESIZE);
 }
+void cleanup_stack(char *stack) {
+  if (stack != nullptr)
+    munmap(stack, getpagesize());
+}
 /*int set_cgroups(char *cg_name) { std::cout << "continue...\n"; }*/
 
-int exec_container(void *arg) {
-  std::cout << "Hello world from child PID: " << getpid() << std::endl;
+static int set_hostname(std::string &hostname) {
+  struct utsname uts;
+  if (sethostname(hostname.c_str(), hostname.length()) == -1)
+    return 0;
 
-  unshare(CLONE_NEWNS);
+  if (uname(&uts) == -1)
+    return 0;
+  return 1;
+}
+
+static void set_env(std::string &hostname) {
+  setenv("TERM", "xterm-256color", 1);
+  setenv("PS1", "[\\u@\\h \\W]\\$ ", 1);
+  setenv("PATH", "/bin:/sbin:/usr/bin:/usr/sbin", 1);
+  set_hostname(hostname);
+}
+
+int exec_container(void *arg) {
+  std::string hostname("zcontainer");
+  if (mount(nullptr, "/", NULL, MS_REC | MS_PRIVATE, NULL) == -1) {
+    std::cerr << "Error: making mounts private => " << strerror(errno)
+              << std::endl;
+    return -1;
+  }
+
   if (clearenv() != 0) {
     std::cerr << "Error: Failed to clear env\n";
     return -1;
   }
 
-  setenv("TERM", "xterm-256color", 1);
-  setenv("PS1", "[\\u@\\h \\W]\\$ ", 1);
-  setenv("PATH", "/bin:/sbin:/usr/bin:/usr/sbin", 1);
-
+  set_env(hostname);
   if (chroot(CONTAINER_ROOTFS) != 0) {
-    std::cerr << "Error: chroot failed: " << strerror(errno) << std::endl;
+    std::cerr << "Error: chroot failed=> " << strerror(errno) << std::endl;
     return -1;
   }
 
   chdir("/");
   if (mount("proc", "/proc", "proc", 0, nullptr) != 0) {
-    std::cerr << "Error: mount /proc failed: " << strerror(errno) << std::endl;
+    std::cerr << "Error: mounting /proc failed: " << strerror(errno)
+              << std::endl;
     return -1;
   }
 
-  char *cmmd[] = {"/bin/sh", nullptr};
-  execvp(cmmd[0], cmmd);
+  const char *cmmd[] = {"/bin/sh", nullptr};
+  execvp(cmmd[0], (char *const *)cmmd);
 
-  std::cerr << "Error: execv failed: " << strerror(errno) << std::endl;
+  std::cerr << "Error: execv failed => " << strerror(errno) << std::endl;
   return -1;
 }

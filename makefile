@@ -24,17 +24,19 @@ all: $(BIN)/$(BINARY)
 
 # Build executable
 $(BIN)/$(BINARY): $(OBJFILES)
-	$(CC) $(CFLAGS) $(LIBS) $(MAIN) -o $@ $^
+	@$(CC) $(CFLAGS) $(LIBS) $(MAIN) -o $@ $^
 
 # Compile source files
 $(OBJFILES): $(CFILES)
-	$(CC) $(CFLAGS) -c $^ 
+	@$(CC) $(CFLAGS) -c $^ 
 
 
 # Phony target (no actual command)
 .PHONY: run clean uninstall all test
 
+run:all
+	@sudo $(BIN)/$(BINARY)
 # Clean target
 clean:
-	rm *.o $(BIN)/* 
+	@rm *.o $(BIN)/* 
 
